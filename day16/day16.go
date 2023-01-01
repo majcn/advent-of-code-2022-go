@@ -1,9 +1,9 @@
 package main
 
 import (
+	"container/heap"
 	"fmt"
 	"regexp"
-	"sort"
 	"strings"
 
 	. "majcn.si/advent-of-code-2022/util"
@@ -80,72 +80,10 @@ func bfs(startNode *Valve, endNode *Valve) int {
 }
 
 type State struct {
-	Time1            int
-	Time2            int
-	Location1        *Valve
-	Location2        *Valve
+	Time             int
+	Location         *Valve
 	PressureReleased int
 	OpenedValves     Set[*Valve]
-}
-
-type HashableState struct {
-	Time1           int
-	Time2           int
-	Location1       *Valve
-	Location2       *Valve
-	OpenedValvesStr string
-}
-
-func (state *State) Hashable() HashableState {
-	tmp := make([]string, len(state.OpenedValves))
-	i := 0
-	for v := range state.OpenedValves {
-		tmp[i] = v.Name
-		i++
-	}
-
-	sort.Strings(tmp)
-
-	return HashableState{
-		Time1:           state.Time1,
-		Time2:           state.Time2,
-		Location1:       state.Location1,
-		Location2:       state.Location2,
-		OpenedValvesStr: strings.Join(tmp, ""),
-	}
-}
-
-func dfs(initState State, nextStatesF func(state State) []State, canBeDiscardedF func(n State, bestResult int) bool) int {
-	bestResult := 0
-	discovered := make(map[HashableState]int)
-
-	var dfsInner func(State)
-	dfsInner = func(state State) {
-		discovered[state.Hashable()] = state.PressureReleased
-
-		for _, n := range nextStatesF(state) {
-			if value, ok := discovered[n.Hashable()]; ok {
-				if state.PressureReleased < value {
-					continue
-				}
-			}
-
-			if bestResult < n.PressureReleased {
-				println(bestResult)
-				bestResult = n.PressureReleased
-			}
-
-			if canBeDiscardedF(n, bestResult) {
-				continue
-			}
-
-			dfsInner(n)
-		}
-	}
-
-	dfsInner(initState)
-
-	return bestResult
 }
 
 type ValvePath struct {
@@ -153,42 +91,65 @@ type ValvePath struct {
 	Cost int
 }
 
-func canBeDiscarded(state State, bestResult int, maxTime int, valvePaths ValvePaths) bool {
-	bestPossibleValue := 0
+func findAllFinalStatesSorted(initState State, nextStatesF func(state State) []State) []State {
+	pQueue := PriorityQueue{}
 
-	flows := make([]int, 0, len(valvePaths.Paths))
-	for valve := range valvePaths.Paths {
-		if !state.OpenedValves.Contains(valve) {
-			flows = append(flows, valve.FlowRate)
+	var findAllFinalStatesInner func(State)
+	findAllFinalStatesInner = func(state State) {
+		heap.Push(&pQueue, &PriorityQueueItem{Value: state, Score: -state.PressureReleased})
+		for _, n := range nextStatesF(state) {
+			findAllFinalStatesInner(n)
 		}
 	}
 
-	sort.Sort(sort.Reverse(sort.IntSlice(flows)))
-	i := Min(state.Time1, state.Time2)
-	for _, flow := range flows {
-		bestPossibleValue += flow * (maxTime - i)
-		i++
+	findAllFinalStatesInner(initState)
 
-		if maxTime-i == 0 {
-			break
-		}
+	allResultStatesSorted := make([]State, len(pQueue))
+	for i := range allResultStatesSorted {
+		allResultStatesSorted[i] = heap.Pop(&pQueue).(*PriorityQueueItem).Value.(State)
 	}
-	return state.PressureReleased+bestPossibleValue <= bestResult
+	return allResultStatesSorted
 }
 
-type ValvePaths struct {
-	Paths   map[*Valve][]ValvePath
-	MaxCost map[*Valve]int
+func getNextStates(state State, valvePaths map[*Valve][]ValvePath, maxTime int) []State {
+	result := make([]State, 0, len(valvePaths[state.Location]))
+
+	for _, valvePath := range valvePaths[state.Location] {
+		if state.OpenedValves.Contains(valvePath.To) {
+			continue
+		}
+
+		newTime := state.Time + valvePath.Cost
+		if newTime > maxTime {
+			continue
+		}
+
+		newPressureReleased := state.PressureReleased + (maxTime-newTime)*valvePath.To.FlowRate
+		newOpenedValves := make(Set[*Valve], len(state.OpenedValves)+1)
+		for k, v := range state.OpenedValves {
+			newOpenedValves[k] = v
+		}
+		newOpenedValves.Add(valvePath.To)
+
+		result = append(result, State{
+			Time:             state.Time + valvePath.Cost,
+			Location:         valvePath.To,
+			PressureReleased: newPressureReleased,
+			OpenedValves:     newOpenedValves,
+		})
+	}
+
+	return result
 }
 
-func solvePartX(data DataType, maxTime int, nextStatesF func(state State, valvePaths ValvePaths) []State) int {
-	valvePaths := ValvePaths{Paths: make(map[*Valve][]ValvePath), MaxCost: make(map[*Valve]int)}
+func solvePartX(data DataType, maxTime int) []State {
+	valvePaths := make(map[*Valve][]ValvePath)
 
 	for _, valve1 := range data {
-		valvePaths.Paths[valve1] = make([]ValvePath, 0, len(data))
+		valvePaths[valve1] = make([]ValvePath, 0, len(data))
 		for _, valve2 := range data {
 			if valve1 != valve2 && valve2.FlowRate > 0 {
-				valvePaths.Paths[valve1] = append(valvePaths.Paths[valve1], ValvePath{
+				valvePaths[valve1] = append(valvePaths[valve1], ValvePath{
 					To:   valve2,
 					Cost: bfs(valve1, valve2) + 1,
 				})
@@ -196,178 +157,56 @@ func solvePartX(data DataType, maxTime int, nextStatesF func(state State, valveP
 		}
 	}
 
-	for valve, paths := range valvePaths.Paths {
-		sort.Slice(paths, func(i, j int) bool {
-			iv := (maxTime - paths[i].Cost) * paths[i].To.FlowRate
-			jv := (maxTime - paths[j].Cost) * paths[j].To.FlowRate
-			return iv > jv
-		})
-		valvePaths.MaxCost[valve] = paths[0].Cost
-	}
-
 	initState := State{
-		Time1:            0,
-		Time2:            0,
-		Location1:        data["AA"],
-		Location2:        data["AA"],
+		Time:             0,
+		Location:         data["AA"],
 		PressureReleased: 0,
 		OpenedValves:     make(Set[*Valve]),
 	}
 
-	return dfs(initState,
-		func(state State) []State {
-			return nextStatesF(state, valvePaths)
-		},
-		func(state State, bestResult int) bool {
-			return canBeDiscarded(state, bestResult, maxTime, valvePaths)
-		},
-	)
+	nextStatesF := func(state State) []State { return getNextStates(state, valvePaths, maxTime) }
+	return findAllFinalStatesSorted(initState, nextStatesF)
 }
 
 func solvePart1(data DataType) (rc int) {
-	maxTime := 30
-	nextStatesF := func(state State, valvePaths ValvePaths) []State {
-		result := make([]State, 0, len(valvePaths.Paths[state.Location1]))
-
-		for _, valvePath := range valvePaths.Paths[state.Location1] {
-			if state.OpenedValves.Contains(valvePath.To) {
-				continue
-			}
-
-			newTime := state.Time1 + valvePath.Cost
-			if newTime > maxTime {
-				continue
-			}
-
-			newPressureReleased := state.PressureReleased + (maxTime-newTime)*valvePath.To.FlowRate
-			newOpenedValves := make(Set[*Valve], len(state.OpenedValves)+1)
-			for k, v := range state.OpenedValves {
-				newOpenedValves[k] = v
-			}
-			newOpenedValves.Add(valvePath.To)
-
-			result = append(result, State{
-				Time1:            state.Time1 + valvePath.Cost,
-				Time2:            maxTime,
-				Location1:        valvePath.To,
-				Location2:        state.Location2,
-				PressureReleased: newPressureReleased,
-				OpenedValves:     newOpenedValves,
-			})
-		}
-
-		return result
-	}
-
-	return solvePartX(data, maxTime, nextStatesF)
+	return solvePartX(data, 30)[0].PressureReleased
 }
 
 func solvePart2(data DataType) (rc int) {
-	maxTime := 26
-	nextStatesF := func(state State, valvePaths ValvePaths) []State {
-		result := make([]State, 0, len(valvePaths.Paths[state.Location1])*len(valvePaths.Paths[state.Location2]))
+	allFinalStatesSorted := solvePartX(data, 26)
 
-		for _, valvePath1 := range valvePaths.Paths[state.Location1] {
-			if state.OpenedValves.Contains(valvePath1.To) {
-				continue
-			}
+	isValidState := func(s1, s2 State) bool {
+		var biggerSet, smallerSet Set[*Valve]
+		if len(s1.OpenedValves) < len(s2.OpenedValves) {
+			biggerSet = s2.OpenedValves
+			smallerSet = s1.OpenedValves
+		} else {
+			biggerSet = s1.OpenedValves
+			smallerSet = s2.OpenedValves
+		}
 
-			for _, valvePath2 := range valvePaths.Paths[state.Location2] {
-				if valvePath1.To == valvePath2.To {
-					continue
-				}
-
-				if state.OpenedValves.Contains(valvePath2.To) {
-					continue
-				}
-
-				newTime1 := state.Time1 + valvePath1.Cost
-				newTime2 := state.Time2 + valvePath2.Cost
-				if newTime1 > maxTime || newTime2 > maxTime {
-					continue
-				}
-
-				newPressureReleased := state.PressureReleased + (maxTime-newTime1)*valvePath1.To.FlowRate + (maxTime-newTime2)*valvePath2.To.FlowRate
-				newOpenedValves := make(Set[*Valve], len(state.OpenedValves)+2)
-				for k, v := range state.OpenedValves {
-					newOpenedValves[k] = v
-				}
-				newOpenedValves.Add(valvePath1.To)
-				newOpenedValves.Add(valvePath2.To)
-
-				result = append(result, State{
-					Time1:            newTime1,
-					Time2:            newTime2,
-					Location1:        valvePath1.To,
-					Location2:        valvePath2.To,
-					PressureReleased: newPressureReleased,
-					OpenedValves:     newOpenedValves,
-				})
+		for el := range smallerSet {
+			if biggerSet.Contains(el) {
+				return false
 			}
 		}
 
-		if state.Time2+valvePaths.MaxCost[state.Location2] > maxTime {
-			for _, valvePath1 := range valvePaths.Paths[state.Location1] {
-				if state.OpenedValves.Contains(valvePath1.To) {
-					continue
-				}
-
-				newTime1 := state.Time1 + valvePath1.Cost
-				if newTime1 > maxTime {
-					continue
-				}
-
-				newPressureReleased := state.PressureReleased + (maxTime-newTime1)*valvePath1.To.FlowRate
-				newOpenedValves := make(Set[*Valve], len(state.OpenedValves)+1)
-				for k, v := range state.OpenedValves {
-					newOpenedValves[k] = v
-				}
-				newOpenedValves.Add(valvePath1.To)
-
-				result = append(result, State{
-					Time1:            newTime1,
-					Time2:            state.Time2,
-					Location1:        valvePath1.To,
-					Location2:        state.Location2,
-					PressureReleased: newPressureReleased,
-					OpenedValves:     newOpenedValves,
-				})
-			}
-		}
-
-		if state.Time1+valvePaths.MaxCost[state.Location1] > maxTime {
-			for _, valvePath2 := range valvePaths.Paths[state.Location2] {
-				if state.OpenedValves.Contains(valvePath2.To) {
-					continue
-				}
-
-				newTime2 := state.Time2 + valvePath2.Cost
-				if newTime2 > maxTime {
-					continue
-				}
-
-				newPressureReleased := state.PressureReleased + (maxTime-newTime2)*valvePath2.To.FlowRate
-				newOpenedValves := make(Set[*Valve], len(state.OpenedValves)+1)
-				for k, v := range state.OpenedValves {
-					newOpenedValves[k] = v
-				}
-				newOpenedValves.Add(valvePath2.To)
-
-				result = append(result, State{
-					Time1:            state.Time1,
-					Time2:            newTime2,
-					Location1:        state.Location1,
-					Location2:        valvePath2.To,
-					PressureReleased: newPressureReleased,
-					OpenedValves:     newOpenedValves,
-				})
-			}
-		}
-
-		return result
+		return true
 	}
 
-	return solvePartX(data, maxTime, nextStatesF)
+	for _, s1 := range allFinalStatesSorted {
+		for _, s2 := range allFinalStatesSorted {
+			if rc >= s1.PressureReleased+s2.PressureReleased {
+				break
+			}
+
+			if isValidState(s1, s2) {
+				rc = Max(rc, s1.PressureReleased+s2.PressureReleased)
+			}
+		}
+	}
+
+	return
 }
 
 func main() {
