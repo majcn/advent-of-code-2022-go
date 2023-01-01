@@ -14,7 +14,7 @@ func parseData(data string) DataType {
 }
 
 type CacheKey struct {
-	Locations        string
+	SolidRocks       uint32
 	DirectionIndex   int
 	CurrentRockIndex int
 }
@@ -57,7 +57,7 @@ func solvePartX(data DataType, gameDuration int, useCache bool) int {
 			}
 
 			newCacheKey := CacheKey{
-				Locations:        game.SolidRocksAsString(100),
+				SolidRocks:       game.SolidRocksHashable(100),
 				DirectionIndex:   directionIndex,
 				CurrentRockIndex: currentRockIndex,
 			}
