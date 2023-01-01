@@ -1,19 +1,19 @@
 package util
 
-type Location struct {
+type Point struct {
 	X int
 	Y int
 }
 
-func (p Location) Add(q Location) Location {
-	return Location{X: p.X + q.X, Y: p.Y + q.Y}
+func (p Point) Add(q Point) Point {
+	return Point{X: p.X + q.X, Y: p.Y + q.Y}
 }
 
-func (p Location) Mul(k int) Location {
-	return Location{X: p.X * k, Y: p.Y * k}
+func (p Point) Mul(k int) Point {
+	return Point{X: p.X * k, Y: p.Y * k}
 }
 
-var neighbours8 = []Location{
+var neighbors8 = []Point{
 	{-1, 0},
 	{-1, 1},
 	{0, 1},
@@ -24,17 +24,17 @@ var neighbours8 = []Location{
 	{-1, -1},
 }
 
-var neighbours4 = []Location{
+var neighbors4 = []Point{
 	{-1, 0},
 	{0, 1},
 	{1, 0},
 	{0, -1},
 }
 
-func GetNeighbours4() []Location {
-	return neighbours4
+func GetNeighbors4() []Point {
+	return neighbors4
 }
 
-func GetNeighbours8() []Location {
-	return neighbours8
+func GetNeighbors8() []Point {
+	return neighbors8
 }

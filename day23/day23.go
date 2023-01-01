@@ -7,16 +7,16 @@ import (
 	. "majcn.si/advent-of-code-2022/util"
 )
 
-type DataType Set[Location]
+type DataType Set[Point]
 
 func parseData(data string) DataType {
 	dataSplit := strings.Split(data, "\n")
 
-	result := make(Set[Location])
+	result := make(Set[Point])
 	for y, line := range dataSplit {
 		for x, v := range line {
 			if v == '#' {
-				result.Add(Location{X: x, Y: y})
+				result.Add(Point{X: x, Y: y})
 			}
 		}
 	}
@@ -24,37 +24,37 @@ func parseData(data string) DataType {
 	return DataType(result)
 }
 
-func getNextLocation(elfs Set[Location], elf Location, priorities []byte) Location {
-	hasNoNeighbours := true
-	for _, neighbour := range GetNeighbours8() {
+func getNextLocation(elfs Set[Point], elf Point, priorities []byte) Point {
+	hasNoNeighbors := true
+	for _, neighbour := range GetNeighbors8() {
 		newLocation := elf.Add(neighbour)
 		if elfs.Contains(newLocation) {
-			hasNoNeighbours = false
+			hasNoNeighbors = false
 			break
 		}
 	}
 
-	if hasNoNeighbours {
+	if hasNoNeighbors {
 		return elf
 	}
 
 	for _, priority := range priorities {
 		switch priority {
 		case 'N':
-			if !elfs.Contains(elf.Add(Location{X: -1, Y: -1})) && !elfs.Contains(elf.Add(Location{X: 0, Y: -1})) && !elfs.Contains(elf.Add(Location{X: 1, Y: -1})) {
-				return elf.Add(Location{X: 0, Y: -1})
+			if !elfs.Contains(elf.Add(Point{X: -1, Y: -1})) && !elfs.Contains(elf.Add(Point{X: 0, Y: -1})) && !elfs.Contains(elf.Add(Point{X: 1, Y: -1})) {
+				return elf.Add(Point{X: 0, Y: -1})
 			}
 		case 'S':
-			if !elfs.Contains(elf.Add(Location{X: -1, Y: 1})) && !elfs.Contains(elf.Add(Location{X: 0, Y: 1})) && !elfs.Contains(elf.Add(Location{X: 1, Y: 1})) {
-				return elf.Add(Location{X: 0, Y: 1})
+			if !elfs.Contains(elf.Add(Point{X: -1, Y: 1})) && !elfs.Contains(elf.Add(Point{X: 0, Y: 1})) && !elfs.Contains(elf.Add(Point{X: 1, Y: 1})) {
+				return elf.Add(Point{X: 0, Y: 1})
 			}
 		case 'W':
-			if !elfs.Contains(elf.Add(Location{X: -1, Y: -1})) && !elfs.Contains(elf.Add(Location{X: -1, Y: 0})) && !elfs.Contains(elf.Add(Location{X: -1, Y: 1})) {
-				return elf.Add(Location{X: -1, Y: 0})
+			if !elfs.Contains(elf.Add(Point{X: -1, Y: -1})) && !elfs.Contains(elf.Add(Point{X: -1, Y: 0})) && !elfs.Contains(elf.Add(Point{X: -1, Y: 1})) {
+				return elf.Add(Point{X: -1, Y: 0})
 			}
 		case 'E':
-			if !elfs.Contains(elf.Add(Location{X: 1, Y: -1})) && !elfs.Contains(elf.Add(Location{X: 1, Y: 0})) && !elfs.Contains(elf.Add(Location{X: 1, Y: 1})) {
-				return elf.Add(Location{X: 1, Y: 0})
+			if !elfs.Contains(elf.Add(Point{X: 1, Y: -1})) && !elfs.Contains(elf.Add(Point{X: 1, Y: 0})) && !elfs.Contains(elf.Add(Point{X: 1, Y: 1})) {
+				return elf.Add(Point{X: 1, Y: 0})
 			}
 		}
 	}
@@ -62,7 +62,7 @@ func getNextLocation(elfs Set[Location], elf Location, priorities []byte) Locati
 	return elf
 }
 
-func solvePartX(data DataType, goal func(int, bool) bool) (int, Set[Location]) {
+func solvePartX(data DataType, goal func(int, bool) bool) (int, Set[Point]) {
 	priorities := [][]byte{
 		{'N', 'S', 'W', 'E'},
 		{'S', 'W', 'E', 'N'},
@@ -70,14 +70,14 @@ func solvePartX(data DataType, goal func(int, bool) bool) (int, Set[Location]) {
 		{'E', 'N', 'S', 'W'},
 	}
 
-	elfs := make(Set[Location], len(data))
+	elfs := make(Set[Point], len(data))
 	for el := range data {
 		elfs.Add(el)
 	}
 
 	for i := 0; ; i++ {
-		blockedLocationsSet := make(Set[Location])
-		nextLocations := make(map[Location]Location)
+		blockedLocationsSet := make(Set[Point])
+		nextLocations := make(map[Point]Point)
 		for elf := range elfs {
 			nextElfLocation := getNextLocation(elfs, elf, priorities[i%4])
 			if elf == nextElfLocation {

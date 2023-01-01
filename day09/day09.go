@@ -30,20 +30,20 @@ func parseData(data string) DataType {
 }
 
 func solvePartX(data DataType, ropeSize int) int {
-	rope := make([]Location, ropeSize)
+	rope := make([]Point, ropeSize)
 
-	visited := NewSet([]Location{{X: 0, Y: 0}})
+	visited := NewSet([]Point{{X: 0, Y: 0}})
 	for _, command := range data {
 		for s := 0; s < command.Steps; s++ {
 			switch command.Direction {
 			case 'R':
-				rope[0] = rope[0].Add(Location{X: 1, Y: 0})
+				rope[0] = rope[0].Add(Point{X: 1, Y: 0})
 			case 'D':
-				rope[0] = rope[0].Add(Location{X: 0, Y: 1})
+				rope[0] = rope[0].Add(Point{X: 0, Y: 1})
 			case 'L':
-				rope[0] = rope[0].Add(Location{X: -1, Y: 0})
+				rope[0] = rope[0].Add(Point{X: -1, Y: 0})
 			case 'U':
-				rope[0] = rope[0].Add(Location{X: 0, Y: -1})
+				rope[0] = rope[0].Add(Point{X: 0, Y: -1})
 			}
 
 			for i := 1; i < ropeSize; i++ {
@@ -71,7 +71,7 @@ func solvePartX(data DataType, ropeSize int) int {
 						diffY = 0
 					}
 
-					*tail = tail.Add(Location{X: diffX, Y: diffY})
+					*tail = tail.Add(Point{X: diffX, Y: diffY})
 				}
 			}
 

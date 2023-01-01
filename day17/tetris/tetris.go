@@ -7,12 +7,12 @@ import (
 	. "majcn.si/advent-of-code-2022/util"
 )
 
-type Rock []Location
+type Rock []Point
 
 type Game struct {
 	solidRocks         map[int][]int
 	movingRock         Rock
-	movingRockLocation Location
+	movingRockLocation Point
 	maxGridX           int
 	maxGridY           int
 }
@@ -21,7 +21,7 @@ func NewGame(rock Rock) *Game {
 	return &Game{
 		solidRocks:         make(map[int][]int),
 		movingRock:         rock,
-		movingRockLocation: Location{X: 2, Y: 3},
+		movingRockLocation: Point{X: 2, Y: 3},
 		maxGridX:           6,
 		maxGridY:           -1,
 	}
@@ -29,7 +29,7 @@ func NewGame(rock Rock) *Game {
 
 func (g *Game) PlaceRock(rock Rock) {
 	g.movingRock = rock
-	g.movingRockLocation = Location{X: 2, Y: g.maxGridY + 4}
+	g.movingRockLocation = Point{X: 2, Y: g.maxGridY + 4}
 }
 
 func (g *Game) TransformToSolid() {
@@ -49,16 +49,16 @@ func (g *Game) TransformToSolid() {
 func (g *Game) Move(direction byte) bool {
 	switch direction {
 	case '>':
-		if g.canMove(g.movingRockLocation.Add(Location{X: 1, Y: 0})) {
+		if g.canMove(g.movingRockLocation.Add(Point{X: 1, Y: 0})) {
 			g.movingRockLocation.X++
 		}
 	case '<':
-		if g.canMove(g.movingRockLocation.Add(Location{X: -1, Y: 0})) {
+		if g.canMove(g.movingRockLocation.Add(Point{X: -1, Y: 0})) {
 			g.movingRockLocation.X--
 		}
 	}
 
-	if g.canMove(g.movingRockLocation.Add(Location{X: 0, Y: -1})) {
+	if g.canMove(g.movingRockLocation.Add(Point{X: 0, Y: -1})) {
 		g.movingRockLocation.Y--
 		return true
 	}
@@ -66,7 +66,7 @@ func (g *Game) Move(direction byte) bool {
 	return false
 }
 
-func (g *Game) canMove(to Location) bool {
+func (g *Game) canMove(to Point) bool {
 	if to.Y == -1 {
 		return false
 	}
