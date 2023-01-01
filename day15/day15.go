@@ -15,8 +15,8 @@ type Range struct {
 }
 
 type Sensor struct {
-	Location
-	ClosestBeacon Location
+	Point
+	ClosestBeacon Point
 }
 
 type DataType []Sensor
@@ -30,8 +30,8 @@ func parseData(data string) DataType {
 	for i, line := range dataSplit {
 		match := r.FindStringSubmatch(line)
 		result[i] = Sensor{
-			Location:      Location{X: ParseInt(match[1]), Y: ParseInt(match[2])},
-			ClosestBeacon: Location{X: ParseInt(match[3]), Y: ParseInt(match[4])},
+			Point:         Point{X: ParseInt(match[1]), Y: ParseInt(match[2])},
+			ClosestBeacon: Point{X: ParseInt(match[3]), Y: ParseInt(match[4])},
 		}
 	}
 
@@ -107,7 +107,7 @@ func solvePart1(data DataType) (rc int) {
 		rc += r.Max - r.Min + 1
 	}
 
-	ignoreBeacons := make(Set[Location])
+	ignoreBeacons := make(Set[Point])
 	for _, sensor := range data {
 		if sensor.ClosestBeacon.Y == y {
 			ignoreBeacons.Add(sensor.ClosestBeacon)
@@ -119,17 +119,17 @@ func solvePart1(data DataType) (rc int) {
 }
 
 func solvePart2(data DataType) (rc int) {
-	lines := make([][2]Location, 0, len(data)*4)
+	lines := make([][2]Point, 0, len(data)*4)
 
 	for _, sensor := range data {
 		maxDistance := Abs(sensor.X-sensor.ClosestBeacon.X) + Abs(sensor.Y-sensor.ClosestBeacon.Y)
-		leftPoint := Location{X: sensor.X - maxDistance - 1, Y: sensor.Y}
-		rightPoint := Location{X: sensor.X - maxDistance + 1, Y: sensor.Y}
+		leftPoint := Point{X: sensor.X - maxDistance - 1, Y: sensor.Y}
+		rightPoint := Point{X: sensor.X - maxDistance + 1, Y: sensor.Y}
 
-		line1 := [2]Location{leftPoint, leftPoint.Add(Location{X: 1, Y: -1})}
-		line2 := [2]Location{leftPoint, leftPoint.Add(Location{X: 1, Y: 1})}
-		line3 := [2]Location{rightPoint, rightPoint.Add(Location{X: -1, Y: -1})}
-		line4 := [2]Location{rightPoint, rightPoint.Add(Location{X: -1, Y: 1})}
+		line1 := [2]Point{leftPoint, leftPoint.Add(Point{X: 1, Y: -1})}
+		line2 := [2]Point{leftPoint, leftPoint.Add(Point{X: 1, Y: 1})}
+		line3 := [2]Point{rightPoint, rightPoint.Add(Point{X: -1, Y: -1})}
+		line4 := [2]Point{rightPoint, rightPoint.Add(Point{X: -1, Y: 1})}
 
 		lines = append(lines, line1, line2, line3, line4)
 	}

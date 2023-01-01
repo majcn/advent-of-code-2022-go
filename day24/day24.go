@@ -8,7 +8,7 @@ import (
 )
 
 type Blizzard struct {
-	Location
+	Point
 	Direction byte
 }
 
@@ -31,7 +31,7 @@ func parseData(data string) DataType {
 		for x, v := range line {
 			switch v {
 			case '^', 'v', '<', '>':
-				result.Blizzards = append(result.Blizzards, Blizzard{Location: Location{X: x, Y: y}, Direction: byte(v)})
+				result.Blizzards = append(result.Blizzards, Blizzard{Point: Point{X: x, Y: y}, Direction: byte(v)})
 			}
 		}
 	}
@@ -40,7 +40,7 @@ func parseData(data string) DataType {
 }
 
 type GraphNode struct {
-	Location
+	Point
 	BlizzardsIndex int
 }
 
@@ -49,7 +49,7 @@ type QueueNode struct {
 	Time int
 }
 
-func bfs(startNode GraphNode, endLocation Location, getNeighborsF func(node GraphNode, startLocation, endLocation Location) []GraphNode) (int, GraphNode) {
+func bfs(startNode GraphNode, endLocation Point, getNeighborsF func(node GraphNode, startLocation, endLocation Point) []GraphNode) (int, GraphNode) {
 	queue := make([]QueueNode, 0)
 	visited := make(Set[GraphNode])
 
@@ -61,11 +61,11 @@ func bfs(startNode GraphNode, endLocation Location, getNeighborsF func(node Grap
 
 		node := queueEl.GraphNode
 
-		if node.Location == endLocation {
+		if node.Point == endLocation {
 			return queueEl.Time, queueEl.GraphNode
 		}
 
-		for _, neighbor := range getNeighborsF(node, startNode.Location, endLocation) {
+		for _, neighbor := range getNeighborsF(node, startNode.Point, endLocation) {
 			if !visited.Contains(neighbor) {
 				queue = append(queue, QueueNode{GraphNode: neighbor, Time: queueEl.Time + 1})
 				visited.Add(neighbor)
@@ -76,24 +76,24 @@ func bfs(startNode GraphNode, endLocation Location, getNeighborsF func(node Grap
 	return MaxInt, GraphNode{}
 }
 
-func getNeighbors(node GraphNode, mapSizeX int, mapSizeY int, getBlizzardLocations func(i int) Set[Location], startLocation Location, endLocation Location) []GraphNode {
+func getNeighbors(node GraphNode, mapSizeX int, mapSizeY int, getBlizzardLocations func(i int) Set[Point], startLocation Point, endLocation Point) []GraphNode {
 	result := make([]GraphNode, 0, 5)
 
-	neighbours := append(GetNeighbours4(), Location{X: 0, Y: 0})
+	neighbors := append(GetNeighbors4(), Point{X: 0, Y: 0})
 
 	newBlizzardsIndex := node.BlizzardsIndex + 1
 	newBlizzards := getBlizzardLocations(newBlizzardsIndex)
-	for _, neighbor := range neighbours {
-		newLocation := node.Location.Add(neighbor)
+	for _, neighbor := range neighbors {
+		newLocation := node.Point.Add(neighbor)
 
 		if newLocation == endLocation {
-			return []GraphNode{{Location: newLocation, BlizzardsIndex: newBlizzardsIndex}}
+			return []GraphNode{{Point: newLocation, BlizzardsIndex: newBlizzardsIndex}}
 		}
 
 		if !newBlizzards.Contains(newLocation) {
 			if newLocation == startLocation || newLocation.X > 0 && newLocation.X < mapSizeX-1 && newLocation.Y > 0 && newLocation.Y < mapSizeY-1 {
 				result = append(result, GraphNode{
-					Location:       newLocation,
+					Point:          newLocation,
 					BlizzardsIndex: newBlizzardsIndex,
 				})
 			}
@@ -103,32 +103,32 @@ func getNeighbors(node GraphNode, mapSizeX int, mapSizeY int, getBlizzardLocatio
 	return result
 }
 
-func getBlizzardLocations(mapSizeX int, mapSizeY int, blizzards []Blizzard, time int) Set[Location] {
+func getBlizzardLocations(mapSizeX int, mapSizeY int, blizzards []Blizzard, time int) Set[Point] {
 	xBlizzardPath := mapSizeX - 2
 	yBlizzardPath := mapSizeY - 2
 
-	result := make(Set[Location])
+	result := make(Set[Point])
 	for _, blizzard := range blizzards {
 		switch blizzard.Direction {
 		case '^':
-			result.Add(Location{X: blizzard.X, Y: Mod(blizzard.Y-1-time, yBlizzardPath) + 1})
+			result.Add(Point{X: blizzard.X, Y: Mod(blizzard.Y-1-time, yBlizzardPath) + 1})
 		case 'v':
-			result.Add(Location{X: blizzard.X, Y: Mod(blizzard.Y-1+time, yBlizzardPath) + 1})
+			result.Add(Point{X: blizzard.X, Y: Mod(blizzard.Y-1+time, yBlizzardPath) + 1})
 		case '<':
-			result.Add(Location{X: Mod(blizzard.X-1-time, xBlizzardPath) + 1, Y: blizzard.Y})
+			result.Add(Point{X: Mod(blizzard.X-1-time, xBlizzardPath) + 1, Y: blizzard.Y})
 		case '>':
-			result.Add(Location{X: Mod(blizzard.X-1+time, xBlizzardPath) + 1, Y: blizzard.Y})
+			result.Add(Point{X: Mod(blizzard.X-1+time, xBlizzardPath) + 1, Y: blizzard.Y})
 		}
 	}
 
 	return result
 }
 
-func solvePartX(data DataType, paths []Location) (rc int) {
+func solvePartX(data DataType, paths []Point) (rc int) {
 	mapSizeX, mapSizeY, blizzards := data.MapSizeX, data.MapSizeY, data.Blizzards
-	allBlizzardLocations := make(map[int]Set[Location])
+	allBlizzardLocations := make(map[int]Set[Point])
 
-	getBlizzardLocationsF := func(i int) Set[Location] {
+	getBlizzardLocationsF := func(i int) Set[Point] {
 		if _, ok := allBlizzardLocations[i]; ok {
 			return allBlizzardLocations[i]
 		}
@@ -138,12 +138,12 @@ func solvePartX(data DataType, paths []Location) (rc int) {
 		return blizzardLocations
 	}
 
-	getNeighborsF := func(node GraphNode, startLocation, endLocation Location) []GraphNode {
+	getNeighborsF := func(node GraphNode, startLocation, endLocation Point) []GraphNode {
 		return getNeighbors(node, mapSizeX, mapSizeY, getBlizzardLocationsF, startLocation, endLocation)
 	}
 
 	currentBlizzardIndex := 0
-	node := GraphNode{Location: paths[0], BlizzardsIndex: currentBlizzardIndex}
+	node := GraphNode{Point: paths[0], BlizzardsIndex: currentBlizzardIndex}
 	for _, p := range paths[1:] {
 		time, goalNode := bfs(node, p, getNeighborsF)
 
@@ -157,7 +157,7 @@ func solvePartX(data DataType, paths []Location) (rc int) {
 func solvePart1(data DataType) (rc int) {
 	mapSizeX, mapSizeY := data.MapSizeX, data.MapSizeY
 
-	path := []Location{
+	path := []Point{
 		{X: 1, Y: 0},
 		{X: mapSizeX - 2, Y: mapSizeY - 1},
 	}
@@ -168,7 +168,7 @@ func solvePart1(data DataType) (rc int) {
 func solvePart2(data DataType) (rc int) {
 	mapSizeX, mapSizeY := data.MapSizeX, data.MapSizeY
 
-	path := []Location{
+	path := []Point{
 		{X: 1, Y: 0},
 		{X: mapSizeX - 2, Y: mapSizeY - 1},
 		{X: 1, Y: 0},

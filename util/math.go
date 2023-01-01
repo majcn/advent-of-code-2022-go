@@ -64,21 +64,21 @@ func SumNaturalNumbers(a int, d int, n int) int {
 }
 
 // LineIntersection function returns Point where two lines intersects
-func LineIntersection(line1 [2]Location, line2 [2]Location) (Location, bool) {
-	xdiff := Location{X: line1[0].X - line1[1].X, Y: line2[0].X - line2[1].X}
-	ydiff := Location{X: line1[0].Y - line1[1].Y, Y: line2[0].Y - line2[1].Y}
+func LineIntersection(line1 [2]Point, line2 [2]Point) (Point, bool) {
+	xdiff := Point{X: line1[0].X - line1[1].X, Y: line2[0].X - line2[1].X}
+	ydiff := Point{X: line1[0].Y - line1[1].Y, Y: line2[0].Y - line2[1].Y}
 
-	det := func(a Location, b Location) int {
+	det := func(a Point, b Point) int {
 		return a.X*b.Y - a.Y*b.X
 	}
 
 	div := det(xdiff, ydiff)
 	if div == 0 {
-		return Location{}, false
+		return Point{}, false
 	}
-	d := Location{X: det(line1[0], line1[1]), Y: det(line2[0], line2[1])}
+	d := Point{X: det(line1[0], line1[1]), Y: det(line2[0], line2[1])}
 	x := det(d, xdiff) / div
 	y := det(d, ydiff) / div
 
-	return Location{X: x, Y: y}, true
+	return Point{X: x, Y: y}, true
 }

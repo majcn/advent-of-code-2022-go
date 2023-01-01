@@ -13,7 +13,8 @@ type Command struct {
 	ChangeDirection byte
 }
 
-type Direction Location
+type Location Point
+type Direction Point
 
 type DataType struct {
 	StartLocation  Location

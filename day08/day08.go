@@ -33,13 +33,13 @@ func solvePart1(data DataType) (rc int) {
 	lenX := len(data[0])
 	lenY := len(data)
 
-	visible := make(Set[Location])
+	visible := make(Set[Point])
 
 	for y := 0; y < lenY; y++ {
 		maxTree := -1
 		for x := 0; x < lenX; x++ {
 			if data[y][x] > maxTree {
-				visible.Add(Location{X: x, Y: y})
+				visible.Add(Point{X: x, Y: y})
 				maxTree = data[y][x]
 			}
 		}
@@ -49,7 +49,7 @@ func solvePart1(data DataType) (rc int) {
 		maxTree := -1
 		for x := lenX - 1; x >= 0; x-- {
 			if data[y][x] > maxTree {
-				visible.Add(Location{X: x, Y: y})
+				visible.Add(Point{X: x, Y: y})
 				maxTree = data[y][x]
 			}
 		}
@@ -59,7 +59,7 @@ func solvePart1(data DataType) (rc int) {
 		maxTree := -1
 		for y := 0; y < lenY; y++ {
 			if data[y][x] > maxTree {
-				visible.Add(Location{X: x, Y: y})
+				visible.Add(Point{X: x, Y: y})
 				maxTree = data[y][x]
 			}
 		}
@@ -69,7 +69,7 @@ func solvePart1(data DataType) (rc int) {
 		maxTree := -1
 		for y := lenY - 1; y >= 0; y-- {
 			if data[y][x] > maxTree {
-				visible.Add(Location{X: x, Y: y})
+				visible.Add(Point{X: x, Y: y})
 				maxTree = data[y][x]
 			}
 		}

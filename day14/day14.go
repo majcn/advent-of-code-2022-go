@@ -8,27 +8,27 @@ import (
 	. "majcn.si/advent-of-code-2022/util"
 )
 
-type DataType [][]Location
+type DataType [][]Point
 
 func parseData(data string) DataType {
 	dataSplit := strings.Split(data, "\n")
 
 	r := regexp.MustCompile(`(\d+),(\d+)`)
 
-	result := make([][]Location, len(dataSplit))
+	result := make([][]Point, len(dataSplit))
 	for i, line := range dataSplit {
 		matches := r.FindAllStringSubmatch(line, -1)
-		result[i] = make([]Location, len(matches))
+		result[i] = make([]Point, len(matches))
 		for j, match := range matches {
-			result[i][j] = Location{X: ParseInt(match[1]), Y: ParseInt(match[2])}
+			result[i][j] = Point{X: ParseInt(match[1]), Y: ParseInt(match[2])}
 		}
 	}
 
 	return result
 }
 
-func buildGrid(data [][]Location) Set[Location] {
-	grid := make(Set[Location])
+func buildGrid(data [][]Point) Set[Point] {
+	grid := make(Set[Point])
 	for _, path := range data {
 		for i := 0; i < len(path)-1; i++ {
 			start := path[i]
@@ -37,7 +37,7 @@ func buildGrid(data [][]Location) Set[Location] {
 			startY, endY := Min(start.Y, end.Y), Max(start.Y, end.Y)
 			for x := startX; x <= endX; x++ {
 				for y := startY; y <= endY; y++ {
-					grid.Add(Location{X: x, Y: y})
+					grid.Add(Point{X: x, Y: y})
 				}
 			}
 		}
@@ -45,19 +45,19 @@ func buildGrid(data [][]Location) Set[Location] {
 	return grid
 }
 
-func solvePartX(data DataType, endPredicate func(sand Location, maxY int) bool) int {
+func solvePartX(data DataType, endPredicate func(sand Point, maxY int) bool) int {
 	grid := buildGrid(data)
 	maxY := 0
 	for location := range grid {
 		maxY = Max(maxY, location.Y)
 	}
 
-	locationDown := Location{X: 0, Y: 1}
-	locationDownLeft := Location{X: -1, Y: 1}
-	locationDownRight := Location{X: 1, Y: 1}
+	locationDown := Point{X: 0, Y: 1}
+	locationDownLeft := Point{X: -1, Y: 1}
+	locationDownRight := Point{X: 1, Y: 1}
 
 	for i := 0; ; i++ {
-		sand := Location{X: 500, Y: 0}
+		sand := Point{X: 500, Y: 0}
 		for sand.Y != maxY+1 {
 			nextSand := sand.Add(locationDown)
 			if grid.Contains(nextSand) {
@@ -81,12 +81,12 @@ func solvePartX(data DataType, endPredicate func(sand Location, maxY int) bool) 
 }
 
 func solvePart1(data DataType) (rc int) {
-	return solvePartX(data, func(sand Location, maxY int) bool { return sand.Y == maxY+1 })
+	return solvePartX(data, func(sand Point, maxY int) bool { return sand.Y == maxY+1 })
 }
 
 func solvePart2(data DataType) (rc int) {
-	goal := Location{X: 500, Y: 0}
-	return solvePartX(data, func(sand Location, _ int) bool { return sand == goal }) + 1
+	goal := Point{X: 500, Y: 0}
+	return solvePartX(data, func(sand Point, _ int) bool { return sand == goal }) + 1
 }
 
 func main() {

@@ -9,23 +9,23 @@ import (
 )
 
 type Node struct {
-	X          int
-	Y          int
-	Mark       byte
-	Neighbours []*Node
+	X         int
+	Y         int
+	Mark      byte
+	Neighbors []*Node
 }
 
 type DataType struct {
 	StartNode *Node
 	EndNode   *Node
-	Nodes     map[Location]*Node
+	Nodes     map[Point]*Node
 }
 
 func parseData(data string) DataType {
 	dataSplit := strings.Split(data, "\n")
 
 	numberOfNodes := len(dataSplit) * len(dataSplit[0])
-	result := DataType{Nodes: make(map[Location]*Node, numberOfNodes)}
+	result := DataType{Nodes: make(map[Point]*Node, numberOfNodes)}
 	for y, line := range dataSplit {
 		for x, v := range line {
 			var node *Node
@@ -39,16 +39,16 @@ func parseData(data string) DataType {
 			default:
 				node = &Node{X: x, Y: y, Mark: byte(v)}
 			}
-			result.Nodes[Location{X: x, Y: y}] = node
+			result.Nodes[Point{X: x, Y: y}] = node
 		}
 	}
 
 	for location, node := range result.Nodes {
-		node.Neighbours = make([]*Node, 0, 4)
-		for _, neighbour := range GetNeighbours4() {
+		node.Neighbors = make([]*Node, 0, 4)
+		for _, neighbour := range GetNeighbors4() {
 			newLocation := location.Add(neighbour)
 			if _, ok := result.Nodes[newLocation]; ok && int(result.Nodes[newLocation].Mark)-int(node.Mark) < 2 {
-				node.Neighbours = append(node.Neighbours, result.Nodes[newLocation])
+				node.Neighbors = append(node.Neighbors, result.Nodes[newLocation])
 			}
 		}
 	}
@@ -73,7 +73,7 @@ func aStarSearchAlgorithm(startNode *Node, endNode *Node) int {
 		}
 
 		openSet.Remove(current)
-		for _, neighbour := range current.Neighbours {
+		for _, neighbour := range current.Neighbors {
 			tentativeGScore := gScore[current] + d(current, neighbour)
 			if gScoreValue, ok := gScore[neighbour]; ok && tentativeGScore >= gScoreValue {
 				continue
