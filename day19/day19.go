@@ -145,28 +145,22 @@ func getNextStates(blueprint Blueprint, state State) []State {
 }
 
 func canBeDiscarded(state State, bestResult State, blueprint Blueprint, maxTime int) bool {
-	for i := state.Time + 1; i <= maxTime; i++ {
-		state.Clay += state.ClayRobots
-		state.ClayRobots++
-	}
+	diffTime := maxTime - state.Time
 
-	for i := state.Time + 1; i <= maxTime; i++ {
-		state.Obsidian += state.ObsidianRobots
-		state.Clay -= blueprint.ObsidianRobotCostClay
-		if state.Clay >= 0 {
-			state.ObsidianRobots++
-		}
-	}
+	calculatedStateClay := state.Clay +
+		SumNaturalNumbers(state.ClayRobots, 1, diffTime)
 
-	for i := state.Time + 1; i <= maxTime; i++ {
-		state.Geode += state.GeodeRobots
-		state.Obsidian -= blueprint.GeodeRobotCostObsidian
-		if state.Obsidian >= 0 {
-			state.GeodeRobots++
-		}
-	}
+	maxAdditionalObsidianRobots := Min(calculatedStateClay/blueprint.ObsidianRobotCostClay, diffTime)
+	calculatedStateObsidian := state.Obsidian +
+		SumNaturalNumbers(state.ObsidianRobots, 1, maxAdditionalObsidianRobots) +
+		(diffTime-maxAdditionalObsidianRobots)*(state.ObsidianRobots+maxAdditionalObsidianRobots)
 
-	return state.Geode <= bestResult.Geode
+	maxAdditionalGeodeRobots := Min(calculatedStateObsidian/blueprint.GeodeRobotCostObsidian, diffTime)
+	calculatedStateGeode := state.Geode +
+		SumNaturalNumbers(state.GeodeRobots, 1, maxAdditionalGeodeRobots) +
+		(diffTime-maxAdditionalGeodeRobots)*(state.GeodeRobots+maxAdditionalGeodeRobots)
+
+	return calculatedStateGeode <= bestResult.Geode
 }
 
 func dfs(initState State, blueprint Blueprint, maxTime int, nextStatesF func(blueprint Blueprint, state State) []State) State {
