@@ -1,8 +1,8 @@
 package tetris
 
 import (
+	"hash/fnv"
 	"strconv"
-	"strings"
 
 	. "majcn.si/advent-of-code-2022/util"
 )
@@ -94,24 +94,23 @@ func (g *Game) Score() int {
 	return g.maxGridY + 1
 }
 
-func (g *Game) SolidRocksAsString(size int) string {
-	var locationsStringBuilder strings.Builder
-
+func (g *Game) SolidRocksHashable(size int) uint32 {
 	minY := g.maxGridY - size
 	if minY <= 0 {
-		return ""
+		return 0
 	}
+
+	h := fnv.New32()
 
 	for y := minY; y <= g.maxGridY; y++ {
 		for x, v := range g.solidRocks[y] {
 			if v == 1 {
-				locationsStringBuilder.WriteString(strconv.Itoa(x))
-				locationsStringBuilder.WriteString(",")
-				locationsStringBuilder.WriteString(strconv.Itoa(y - minY))
-				locationsStringBuilder.WriteString(";")
+				h.Write([]byte(strconv.Itoa(x)))
+				h.Write([]byte{','})
+				h.Write([]byte(strconv.Itoa(y - minY)))
 			}
 		}
 	}
 
-	return locationsStringBuilder.String()
+	return h.Sum32()
 }
