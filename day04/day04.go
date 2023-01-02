@@ -37,9 +37,8 @@ func parseData(data string) DataType {
 }
 
 type PartResult struct {
-	S1           Set[int]
-	S2           Set[int]
-	Intersection Set[int]
+	S1 Set[int]
+	S2 Set[int]
 }
 
 func solvePartX(data DataType) []PartResult {
@@ -55,12 +54,9 @@ func solvePartX(data DataType) []PartResult {
 			s2.Add(i)
 		}
 
-		intersection := s1.Intersection(&s2)
-
 		result[i] = PartResult{
-			S1:           s1,
-			S2:           s2,
-			Intersection: intersection,
+			S1: s1,
+			S2: s2,
 		}
 	}
 
@@ -69,7 +65,8 @@ func solvePartX(data DataType) []PartResult {
 
 func solvePart1(data DataType) (rc int) {
 	for _, s := range solvePartX(data) {
-		if len(s.Intersection) == Min(len(s.S1), len(s.S2)) {
+		smallerSet, biggerSet := SmallerFirst(s.S1, s.S2)
+		if smallerSet.IsSubset(biggerSet) {
 			rc++
 		}
 	}
@@ -79,7 +76,7 @@ func solvePart1(data DataType) (rc int) {
 
 func solvePart2(data DataType) (rc int) {
 	for _, s := range solvePartX(data) {
-		if len(s.Intersection) > 0 {
+		if !s.S1.Disjoint(s.S2) {
 			rc++
 		}
 	}

@@ -100,7 +100,7 @@ func solvePartX(data DataType, y int) []Range {
 }
 
 func solvePart1(data DataType) (rc int) {
-	y := 2000000
+	const y = 2000000
 
 	ranges := solvePartX(data, y)
 	for _, r := range ranges {
@@ -119,8 +119,9 @@ func solvePart1(data DataType) (rc int) {
 }
 
 func solvePart2(data DataType) (rc int) {
-	lines := make([][2]Point, 0, len(data)*4)
+	const miny, maxy = 0, 4000000
 
+	lines := make([][2]Point, 0, len(data)*4)
 	for _, sensor := range data {
 		maxDistance := Abs(sensor.X-sensor.ClosestBeacon.X) + Abs(sensor.Y-sensor.ClosestBeacon.Y)
 		leftPoint := Point{X: sensor.X - maxDistance - 1, Y: sensor.Y}
@@ -139,7 +140,7 @@ func solvePart2(data DataType) (rc int) {
 		for _, line2 := range lines {
 			if line1 != line2 {
 				if point, isValidPoint := LineIntersection(line1, line2); isValidPoint {
-					if point.Y >= 0 && point.Y <= 4000000 {
+					if point.Y >= miny && point.Y <= maxy {
 						interestingPoints.Add(point.Y)
 					}
 				}
@@ -150,7 +151,7 @@ func solvePart2(data DataType) (rc int) {
 	for y := range interestingPoints {
 		ranges := solvePartX(data, y)
 		if len(ranges) == 2 {
-			return (ranges[0].Max+1)*4000000 + y
+			return (ranges[0].Max+1)*maxy + y
 		}
 	}
 

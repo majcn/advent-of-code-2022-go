@@ -94,23 +94,22 @@ func (g *Game) Score() int {
 	return g.maxGridY + 1
 }
 
-func (g *Game) SolidRocksHashable(size int) uint32 {
+func (g *Game) SolidRocksHashable(size int) uint64 {
 	minY := g.maxGridY - size
 	if minY <= 0 {
 		return 0
 	}
 
-	h := fnv.New32()
+	h := fnv.New64()
 
 	for y := minY; y <= g.maxGridY; y++ {
 		for x, v := range g.solidRocks[y] {
 			if v == 1 {
 				h.Write([]byte(strconv.Itoa(x)))
-				h.Write([]byte{','})
 				h.Write([]byte(strconv.Itoa(y - minY)))
 			}
 		}
 	}
 
-	return h.Sum32()
+	return h.Sum64()
 }

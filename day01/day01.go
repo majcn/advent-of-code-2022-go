@@ -14,13 +14,8 @@ func parseData(data string) DataType {
 	dataSplit := strings.Split(data, "\n\n")
 
 	result := make([][]int, len(dataSplit))
-	for j, lines := range dataSplit {
-		lineSplit := strings.Split(lines, "\n")
-
-		result[j] = make([]int, len(lineSplit))
-		for i, v := range lineSplit {
-			result[j][i] = ParseInt(v)
-		}
+	for i, lines := range dataSplit {
+		result[i] = StringsToInts(strings.Split(lines, "\n"))
 	}
 
 	return result

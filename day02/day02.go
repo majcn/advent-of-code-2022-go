@@ -19,9 +19,9 @@ func parseData(data string) DataType {
 
 	result := make([]State, len(dataSplit))
 	for i, line := range dataSplit {
-		actions := strings.Fields(line)
+		p1, p2, _ := strings.Cut(line, " ")
 
-		result[i] = State{P1: actions[0][0], P2: actions[1][0]}
+		result[i] = State{P1: p1[0], P2: p2[0]}
 	}
 
 	return result

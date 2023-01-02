@@ -33,10 +33,10 @@ func compare(left []any, right []any) int {
 
 		var r int
 		switch {
-		case isLeftList && isRightList:
-			r = compare(leftList, rightList)
 		case isLeftNum && isRightNum:
 			r = int(rightNum - leftNum)
+		case isLeftList && isRightList:
+			r = compare(leftList, rightList)
 		case isLeftList:
 			r = compare(leftList, []any{rightNum})
 		default:
@@ -54,15 +54,15 @@ func compare(left []any, right []any) int {
 func solvePart1(data DataType) (rc int) {
 	for i := 0; i < len(data); i += 2 {
 		if compare(data[i], data[i+1]) > 0 {
-			rc += (i/2 + 1)
+			rc += i/2 + 1
 		}
 	}
 	return
 }
 
 func solvePart2(data DataType) (rc int) {
-	divider1 := "[[2]]"
-	divider2 := "[[6]]"
+	const divider1 = "[[2]]"
+	const divider2 = "[[6]]"
 	result := make([]int, 0, 2)
 
 	var divider1Unmarshal, divider2Unmarshal []any

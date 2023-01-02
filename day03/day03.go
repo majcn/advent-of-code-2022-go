@@ -20,24 +20,20 @@ func parseData(data string) DataType {
 	return result
 }
 
-func priority(s Set[byte]) int {
-	for el := range s {
-		if 'a' <= el && el <= 'z' {
-			return int(el) - 96
-		} else {
-			return int(el) - 38
-		}
+func priority(s byte) int {
+	if 'a' <= s && s <= 'z' {
+		return int(s) - 96
+	} else {
+		return int(s) - 38
 	}
-
-	return 0
 }
 
 func solvePart1(data DataType) (rc int) {
 	for _, line := range data {
 		part1Set := NewSet(line[0 : len(line)/2])
 		part2Set := NewSet(line[len(line)/2:])
-		intersection := part1Set.Intersection(&part2Set)
-		rc += priority(intersection)
+		intersection := part1Set.Intersection(part2Set)
+		rc += priority(intersection.Pop())
 	}
 
 	return
@@ -48,9 +44,9 @@ func solvePart2(data DataType) (rc int) {
 		part1Set := NewSet(data[i])
 		part2Set := NewSet(data[i+1])
 		part3Set := NewSet(data[i+2])
-		intersection := part1Set.Intersection(&part2Set)
-		intersection = intersection.Intersection(&part3Set)
-		rc += priority(intersection)
+		intersection := part1Set.Intersection(part2Set)
+		intersection = intersection.Intersection(part3Set)
+		rc += priority(intersection.Pop())
 	}
 
 	return

@@ -11,8 +11,7 @@ func (node *dirNode) Size() int {
 
 func (node *dirNode) SizeWithoutFolder(withoutFolder Node) int {
 	s := 0
-	for childName := range node.children {
-		childNode := node.children[childName]
+	for _, childNode := range node.children {
 		if childNode != withoutFolder {
 			s += childNode.SizeWithoutFolder(withoutFolder)
 		}
@@ -22,8 +21,8 @@ func (node *dirNode) SizeWithoutFolder(withoutFolder Node) int {
 }
 
 func (node *dirNode) Walk(visitor func(node Node, isDirectory bool)) {
-	for child := range node.children {
-		node.children[child].Walk(visitor)
+	for _, childNode := range node.children {
+		childNode.Walk(visitor)
 	}
 
 	visitor(node, true)

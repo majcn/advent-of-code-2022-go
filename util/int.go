@@ -1,7 +1,6 @@
 package util
 
 import (
-	"log"
 	"strconv"
 )
 
@@ -24,7 +23,7 @@ func ParseInt(s any) (rc int) {
 	case []byte:
 		rc, _ = strconv.Atoi(string(sv))
 	default:
-		log.Fatalln("Invalid input for ParseInt!")
+		panic("unreachable")
 	}
 
 	return

@@ -14,7 +14,7 @@ func parseData(data string) DataType {
 
 func solvePartX(data DataType, n int) int {
 	for i := 0; ; i++ {
-		if len(NewSet(data[i:i+n])) == n {
+		if NewSet(data[i:i+n]).Len() == n {
 			return i + n
 		}
 	}

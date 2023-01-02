@@ -47,7 +47,7 @@ func lsCommand(command string, root Node, currentNode Node) {
 
 func BuildFilesystem(commands []string) Node {
 	root := Node(&dirNode{
-		children: map[string]Node{},
+		children: make(map[string]Node),
 	})
 
 	currentNode := root

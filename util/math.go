@@ -1,6 +1,9 @@
 package util
 
-import "math"
+import (
+	"math"
+	"math/bits"
+)
 
 type Number interface {
 	int
@@ -28,6 +31,18 @@ func Max[T Number](s ...T) (rc T) {
 	}
 
 	return
+}
+
+func MinAny[T any, R int](s []T, less func(i, j int) bool) (rc T) {
+	minIndex := 0
+
+	for i := range s[1:] {
+		if less(i+1, minIndex) {
+			minIndex = i + 1
+		}
+	}
+
+	return s[minIndex]
 }
 
 func Sum[T Number](s []T) (rc T) {
@@ -81,4 +96,58 @@ func LineIntersection(line1 [2]Point, line2 [2]Point) (Point, bool) {
 	y := det(d, ydiff) / div
 
 	return Point{X: x, Y: y}, true
+}
+
+// Combinations returns combinations of n elements for a given array.
+// For n < 1, it equals to All and returns all combinations.
+// source: https://github.com/mxschmitt/golang-combinations/blob/main/combinations.go
+func Combinations[T any](set []T, n int) (subsets [][]T) {
+	length := uint(len(set))
+
+	if n > len(set) {
+		n = len(set)
+	}
+
+	for subsetBits := 1; subsetBits < (1 << length); subsetBits++ {
+		if n > 0 && bits.OnesCount(uint(subsetBits)) != n {
+			continue
+		}
+
+		var subset []T
+
+		for object := uint(0); object < length; object++ {
+			if (subsetBits>>object)&1 == 1 {
+				subset = append(subset, set[object])
+			}
+		}
+
+		subsets = append(subsets, subset)
+	}
+
+	return subsets
+}
+
+// Permutations returns permutations of n elements for a given array.
+func Permutations[T any](set []T, n int) [][]T {
+	if n == 1 {
+		temp := make([][]T, 0)
+		for _, rr := range set {
+			t := make([]T, 0)
+			t = append(t, rr)
+			temp = append(temp, [][]T{t}...)
+		}
+		return temp
+	}
+
+	res := make([][]T, 0)
+	for i := 0; i < len(set); i++ {
+		perms := make([]T, 0)
+		perms = append(perms, set[:i]...)
+		perms = append(perms, set[i+1:]...)
+		for _, x := range Permutations(perms, n-1) {
+			t := append(x, set[i])
+			res = append(res, [][]T{t}...)
+		}
+	}
+	return res
 }

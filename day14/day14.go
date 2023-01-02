@@ -31,8 +31,7 @@ func buildGrid(data [][]Point) Set[Point] {
 	grid := make(Set[Point])
 	for _, path := range data {
 		for i := 0; i < len(path)-1; i++ {
-			start := path[i]
-			end := path[i+1]
+			start, end := path[i], path[i+1]
 			startX, endX := Min(start.X, end.X), Max(start.X, end.X)
 			startY, endY := Min(start.Y, end.Y), Max(start.Y, end.Y)
 			for x := startX; x <= endX; x++ {

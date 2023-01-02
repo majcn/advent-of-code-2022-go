@@ -17,7 +17,7 @@ func parseData(data string) DataType {
 func solvePart1(data DataType) (rc int) {
 	p := interpreter.New(data)
 
-	for !p.End {
+	for !p.Halt {
 		switch p.Cycle + 1 {
 		case 20, 60, 100, 140, 180, 220:
 			rc += (p.Cycle + 1) * p.RegisterX
@@ -39,7 +39,7 @@ func solvePart2(data DataType) (rc string) {
 
 	p := interpreter.New(data)
 
-	for !p.End {
+	for !p.Halt {
 		x := p.Cycle % 40
 		y := p.Cycle / 40
 		if x >= p.RegisterX-1 && x <= p.RegisterX+1 {

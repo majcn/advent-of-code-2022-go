@@ -13,9 +13,8 @@ type Blizzard struct {
 }
 
 type DataType struct {
-	Blizzards []Blizzard
-	MapSizeX  int
-	MapSizeY  int
+	Blizzards     []Blizzard
+	BlizzardsBBox BBox
 }
 
 func parseData(data string) DataType {
@@ -23,8 +22,12 @@ func parseData(data string) DataType {
 
 	result := DataType{
 		Blizzards: []Blizzard{},
-		MapSizeX:  len(dataSplit[0]),
-		MapSizeY:  len(dataSplit),
+		BlizzardsBBox: BBox{
+			MinX: 1,
+			MaxX: len(dataSplit[0]) - 2,
+			MinY: 1,
+			MaxY: len(dataSplit) - 2,
+		},
 	}
 
 	for y, line := range dataSplit {
@@ -76,7 +79,7 @@ func bfs(startNode GraphNode, endLocation Point, getNeighborsF func(node GraphNo
 	return MaxInt, GraphNode{}
 }
 
-func getNeighbors(node GraphNode, mapSizeX int, mapSizeY int, getBlizzardLocations func(i int) Set[Point], startLocation Point, endLocation Point) []GraphNode {
+func getNeighbors(node GraphNode, blizzardsBBox BBox, getBlizzardLocations func(i int) Set[Point], startLocation Point, endLocation Point) []GraphNode {
 	result := make([]GraphNode, 0, 5)
 
 	neighbors := append(GetNeighbors4(), Point{X: 0, Y: 0})
@@ -91,7 +94,7 @@ func getNeighbors(node GraphNode, mapSizeX int, mapSizeY int, getBlizzardLocatio
 		}
 
 		if !newBlizzards.Contains(newLocation) {
-			if newLocation == startLocation || newLocation.X > 0 && newLocation.X < mapSizeX-1 && newLocation.Y > 0 && newLocation.Y < mapSizeY-1 {
+			if newLocation == startLocation || newLocation.InBBox(blizzardsBBox) {
 				result = append(result, GraphNode{
 					Point:          newLocation,
 					BlizzardsIndex: newBlizzardsIndex,
@@ -103,9 +106,9 @@ func getNeighbors(node GraphNode, mapSizeX int, mapSizeY int, getBlizzardLocatio
 	return result
 }
 
-func getBlizzardLocations(mapSizeX int, mapSizeY int, blizzards []Blizzard, time int) Set[Point] {
-	xBlizzardPath := mapSizeX - 2
-	yBlizzardPath := mapSizeY - 2
+func getBlizzardLocations(blizzardsBBox BBox, blizzards []Blizzard, time int) Set[Point] {
+	xBlizzardPath := blizzardsBBox.MaxX - blizzardsBBox.MinX + 1
+	yBlizzardPath := blizzardsBBox.MaxY - blizzardsBBox.MinY + 1
 
 	result := make(Set[Point])
 	for _, blizzard := range blizzards {
@@ -125,7 +128,7 @@ func getBlizzardLocations(mapSizeX int, mapSizeY int, blizzards []Blizzard, time
 }
 
 func solvePartX(data DataType, paths []Point) (rc int) {
-	mapSizeX, mapSizeY, blizzards := data.MapSizeX, data.MapSizeY, data.Blizzards
+	blizzards, blizzardsBBox := data.Blizzards, data.BlizzardsBBox
 	allBlizzardLocations := make(map[int]Set[Point])
 
 	getBlizzardLocationsF := func(i int) Set[Point] {
@@ -133,13 +136,13 @@ func solvePartX(data DataType, paths []Point) (rc int) {
 			return allBlizzardLocations[i]
 		}
 
-		blizzardLocations := getBlizzardLocations(mapSizeX, mapSizeY, blizzards, i)
+		blizzardLocations := getBlizzardLocations(blizzardsBBox, blizzards, i)
 		allBlizzardLocations[i] = blizzardLocations
 		return blizzardLocations
 	}
 
 	getNeighborsF := func(node GraphNode, startLocation, endLocation Point) []GraphNode {
-		return getNeighbors(node, mapSizeX, mapSizeY, getBlizzardLocationsF, startLocation, endLocation)
+		return getNeighbors(node, blizzardsBBox, getBlizzardLocationsF, startLocation, endLocation)
 	}
 
 	currentBlizzardIndex := 0
@@ -155,24 +158,24 @@ func solvePartX(data DataType, paths []Point) (rc int) {
 }
 
 func solvePart1(data DataType) (rc int) {
-	mapSizeX, mapSizeY := data.MapSizeX, data.MapSizeY
+	blizzardsBBox := data.BlizzardsBBox
 
 	path := []Point{
 		{X: 1, Y: 0},
-		{X: mapSizeX - 2, Y: mapSizeY - 1},
+		{X: blizzardsBBox.MaxX, Y: blizzardsBBox.MaxY + 1},
 	}
 
 	return solvePartX(data, path)
 }
 
 func solvePart2(data DataType) (rc int) {
-	mapSizeX, mapSizeY := data.MapSizeX, data.MapSizeY
+	blizzardsBBox := data.BlizzardsBBox
 
 	path := []Point{
 		{X: 1, Y: 0},
-		{X: mapSizeX - 2, Y: mapSizeY - 1},
+		{X: blizzardsBBox.MaxX, Y: blizzardsBBox.MaxY + 1},
 		{X: 1, Y: 0},
-		{X: mapSizeX - 2, Y: mapSizeY - 1},
+		{X: blizzardsBBox.MaxX, Y: blizzardsBBox.MaxY + 1},
 	}
 
 	return solvePartX(data, path)

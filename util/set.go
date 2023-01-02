@@ -29,16 +29,20 @@ func (s *Set[K]) Pop() K {
 	return result
 }
 
-func (s *Set[K]) Contains(el K) bool {
-	if _, ok := (*s)[el]; ok {
+func (s Set[K]) Len() int {
+	return len(s)
+}
+
+func (s Set[K]) Contains(el K) bool {
+	if _, ok := s[el]; ok {
 		return true
 	}
 
 	return false
 }
 
-func (s *Set[K]) IsSubset(s2 *Set[K]) bool {
-	for el := range *s {
+func (s Set[K]) IsSubset(s2 Set[K]) bool {
+	for el := range s {
 		if !s2.Contains(el) {
 			return false
 		}
@@ -47,19 +51,20 @@ func (s *Set[K]) IsSubset(s2 *Set[K]) bool {
 	return true
 }
 
-func (s *Set[K]) Equals(s2 *Set[K]) bool {
-	if len(*s) != len(*s2) {
+func (s Set[K]) Equals(s2 Set[K]) bool {
+	if len(s) != len(s2) {
 		return false
 	}
 
 	return s.IsSubset(s2)
 }
 
-func (s *Set[K]) Intersection(s2 *Set[K]) Set[K] {
-	result := make(Set[K], len(*s))
+func (s Set[K]) Intersection(s2 Set[K]) Set[K] {
+	smallerSet, biggerSet := SmallerFirst(s, s2)
 
-	for el := range *s {
-		if (*s2).Contains(el) {
+	result := make(Set[K], smallerSet.Len())
+	for el := range smallerSet {
+		if biggerSet.Contains(el) {
 			result[el] = voidVar
 		}
 	}
@@ -67,11 +72,23 @@ func (s *Set[K]) Intersection(s2 *Set[K]) Set[K] {
 	return result
 }
 
-func (s *Set[K]) Difference(s2 *Set[K]) Set[K] {
-	result := make(Set[K], len(*s))
+func (s Set[K]) Disjoint(s2 Set[K]) bool {
+	smallerSet, biggerSet := SmallerFirst(s, s2)
 
-	for el := range *s {
-		if !(*s2).Contains(el) {
+	for el := range smallerSet {
+		if biggerSet.Contains(el) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s Set[K]) Difference(s2 Set[K]) Set[K] {
+	result := make(Set[K], len(s))
+
+	for el := range s {
+		if !(s2).Contains(el) {
 			result[el] = voidVar
 		}
 	}
