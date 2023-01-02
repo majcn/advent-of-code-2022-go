@@ -10,14 +10,7 @@ import (
 type DataType []int
 
 func parseData(data string) DataType {
-	dataSplit := strings.Split(data, "\n")
-
-	result := make([]int, len(dataSplit))
-	for i, line := range dataSplit {
-		result[i] = ParseInt(line)
-	}
-
-	return result
+	return StringsToInts(strings.Split(data, "\n"))
 }
 
 func solvePartX(data DataType, nrMixes int) (rc int) {

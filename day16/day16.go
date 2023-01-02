@@ -1,9 +1,9 @@
 package main
 
 import (
-	"container/heap"
 	"fmt"
 	"regexp"
+	"sort"
 	"strings"
 
 	. "majcn.si/advent-of-code-2022/util"
@@ -91,12 +91,12 @@ type ValvePath struct {
 	Cost int
 }
 
-func findAllFinalStatesSorted(initState State, nextStatesF func(state State) []State) []State {
-	pQueue := PriorityQueue{}
+func findAllFinalStates(initState State, nextStatesF func(state State) []State) []State {
+	candidates := make([]State, 0)
 
 	var findAllFinalStatesInner func(State)
 	findAllFinalStatesInner = func(state State) {
-		heap.Push(&pQueue, &PriorityQueueItem{Value: state, Score: -state.PressureReleased})
+		candidates = append(candidates, state)
 		for _, n := range nextStatesF(state) {
 			findAllFinalStatesInner(n)
 		}
@@ -104,11 +104,7 @@ func findAllFinalStatesSorted(initState State, nextStatesF func(state State) []S
 
 	findAllFinalStatesInner(initState)
 
-	allResultStatesSorted := make([]State, len(pQueue))
-	for i := range allResultStatesSorted {
-		allResultStatesSorted[i] = heap.Pop(&pQueue).(*PriorityQueueItem).Value.(State)
-	}
-	return allResultStatesSorted
+	return candidates
 }
 
 func getNextStates(state State, valvePaths map[*Valve][]ValvePath, maxTime int) []State {
@@ -125,7 +121,7 @@ func getNextStates(state State, valvePaths map[*Valve][]ValvePath, maxTime int) 
 		}
 
 		newPressureReleased := state.PressureReleased + (maxTime-newTime)*valvePath.To.FlowRate
-		newOpenedValves := make(Set[*Valve], len(state.OpenedValves)+1)
+		newOpenedValves := make(Set[*Valve], state.OpenedValves.Len()+1)
 		for k, v := range state.OpenedValves {
 			newOpenedValves[k] = v
 		}
@@ -165,42 +161,31 @@ func solvePartX(data DataType, maxTime int) []State {
 	}
 
 	nextStatesF := func(state State) []State { return getNextStates(state, valvePaths, maxTime) }
-	return findAllFinalStatesSorted(initState, nextStatesF)
+	return findAllFinalStates(initState, nextStatesF)
 }
 
 func solvePart1(data DataType) (rc int) {
-	return solvePartX(data, 30)[0].PressureReleased
+	allFinalStates := solvePartX(data, 30)
+	maxValueState := MinAny(allFinalStates, func(i, j int) bool {
+		return allFinalStates[i].PressureReleased > allFinalStates[j].PressureReleased
+	})
+
+	return maxValueState.PressureReleased
 }
 
 func solvePart2(data DataType) (rc int) {
-	allFinalStatesSorted := solvePartX(data, 26)
+	allFinalStates := solvePartX(data, 26)
+	sort.Slice(allFinalStates, func(i, j int) bool {
+		return allFinalStates[i].PressureReleased > allFinalStates[j].PressureReleased
+	})
 
-	isValidState := func(s1, s2 State) bool {
-		var biggerSet, smallerSet Set[*Valve]
-		if len(s1.OpenedValves) < len(s2.OpenedValves) {
-			biggerSet = s2.OpenedValves
-			smallerSet = s1.OpenedValves
-		} else {
-			biggerSet = s1.OpenedValves
-			smallerSet = s2.OpenedValves
-		}
-
-		for el := range smallerSet {
-			if biggerSet.Contains(el) {
-				return false
-			}
-		}
-
-		return true
-	}
-
-	for _, s1 := range allFinalStatesSorted {
-		for _, s2 := range allFinalStatesSorted {
+	for _, s1 := range allFinalStates {
+		for _, s2 := range allFinalStates {
 			if rc >= s1.PressureReleased+s2.PressureReleased {
 				break
 			}
 
-			if isValidState(s1, s2) {
+			if s1.OpenedValves.Disjoint(s2.OpenedValves) {
 				rc = Max(rc, s1.PressureReleased+s2.PressureReleased)
 			}
 		}

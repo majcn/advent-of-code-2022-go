@@ -201,7 +201,6 @@ func findMaxGeodes(blueprint Blueprint, maxTime int) int {
 }
 
 func solvePart1(data DataType) (rc int) {
-	findMaxGeodes(data[3], 24)
 	for _, blueprint := range data {
 		rc += blueprint.ID * findMaxGeodes(blueprint, 24)
 	}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"container/heap"
 	"fmt"
 	"strings"
 
@@ -47,8 +46,8 @@ func parseData(data string) DataType {
 		node.Neighbors = make([]*Node, 0, 4)
 		for _, neighbour := range GetNeighbors4() {
 			newLocation := location.Add(neighbour)
-			if _, ok := result.Nodes[newLocation]; ok && int(result.Nodes[newLocation].Mark)-int(node.Mark) < 2 {
-				node.Neighbors = append(node.Neighbors, result.Nodes[newLocation])
+			if nNode, ok := result.Nodes[newLocation]; ok && int(nNode.Mark)-int(node.Mark) < 2 {
+				node.Neighbors = append(node.Neighbors, nNode)
 			}
 		}
 	}
@@ -61,12 +60,11 @@ func aStarSearchAlgorithm(startNode *Node, endNode *Node) int {
 	d := func(c *Node, n *Node) int { return 1 }
 
 	openSet := NewSet([]*Node{startNode})
-	queue := PriorityQueue{&PriorityQueueItem{Value: startNode}}
+	queue := NewPriorityQueue(startNode)
 
 	gScore := map[*Node]int{startNode: 0}
-	for len(queue) > 0 {
-		queueItem := heap.Pop(&queue).(*PriorityQueueItem)
-		current, score := queueItem.Value.(*Node), queueItem.Score
+	for queue.Len() > 0 {
+		current, score := queue.Pop()
 
 		if current == endNode {
 			return score
@@ -82,16 +80,10 @@ func aStarSearchAlgorithm(startNode *Node, endNode *Node) int {
 			gScore[neighbour] = tentativeGScore
 			fScore := tentativeGScore + h(neighbour)
 			if openSet.Contains(neighbour) {
-				for i, node := range queue {
-					if node.Value == neighbour {
-						node.Score = fScore
-						heap.Fix(&queue, i)
-						break
-					}
-				}
+				queue.Fix(neighbour, fScore)
 			} else {
 				openSet.Add(neighbour)
-				heap.Push(&queue, &PriorityQueueItem{Value: neighbour, Score: fScore})
+				queue.Push(neighbour, fScore)
 			}
 		}
 	}

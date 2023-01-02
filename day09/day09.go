@@ -19,11 +19,11 @@ func parseData(data string) DataType {
 
 	result := make([]Command, len(dataSplit))
 	for i, line := range dataSplit {
-		fields := strings.Fields(line)
-
-		direction := fields[0][0]
-		steps := ParseInt(fields[1])
-		result[i] = Command{Direction: direction, Steps: steps}
+		direction, steps, _ := strings.Cut(line, " ")
+		result[i] = Command{
+			Direction: direction[0],
+			Steps:     ParseInt(steps),
+		}
 	}
 
 	return result
@@ -47,7 +47,7 @@ func solvePartX(data DataType, ropeSize int) int {
 			}
 
 			for i := 1; i < ropeSize; i++ {
-				head := &rope[i-1]
+				head := rope[i-1]
 				tail := &rope[i]
 
 				if Abs(head.X-tail.X) > 1 || Abs(head.Y-tail.Y) > 1 {

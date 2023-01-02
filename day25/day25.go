@@ -16,7 +16,7 @@ func parseData(data string) DataType {
 func encode(n int) string {
 	result := []byte{}
 
-	for i := 0; ; i++ {
+	for {
 		result = append(result, '2')
 		if decode(string(result)) >= n {
 			break

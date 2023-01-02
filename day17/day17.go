@@ -14,7 +14,7 @@ func parseData(data string) DataType {
 }
 
 type CacheKey struct {
-	SolidRocks       uint32
+	SolidRocks       uint64
 	DirectionIndex   int
 	CurrentRockIndex int
 }

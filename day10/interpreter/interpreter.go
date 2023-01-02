@@ -13,7 +13,7 @@ type Interpreter struct {
 	currentCommand         func()
 	RegisterX              int
 	Cycle                  int
-	End                    bool
+	Halt                   bool
 }
 
 func New(program []string) *Interpreter {
@@ -24,7 +24,7 @@ func New(program []string) *Interpreter {
 		currentCommand:         nil,
 		RegisterX:              1,
 		Cycle:                  0,
-		End:                    false,
+		Halt:                   false,
 	}
 
 	interpreter.initNextCommand()
@@ -50,17 +50,22 @@ func (interpreter *Interpreter) initNextCommand() {
 }
 
 func (interpreter *Interpreter) ExecSingleCycle() {
+	if interpreter.Halt {
+		return
+	}
+
+	interpreter.Cycle++
+
 	if interpreter.currentProgramProgress == 1 {
 		interpreter.currentCommand()
 
 		if interpreter.programIndex == len(interpreter.program) {
-			interpreter.End = true
-		} else {
-			interpreter.initNextCommand()
+			interpreter.Halt = true
+			return
 		}
+
+		interpreter.initNextCommand()
 	} else {
 		interpreter.currentProgramProgress -= 1
 	}
-
-	interpreter.Cycle++
 }

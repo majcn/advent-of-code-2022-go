@@ -9,8 +9,8 @@ import (
 )
 
 type Command struct {
-	Move            int
 	ChangeDirection byte
+	Move            int
 }
 
 type Location Point
@@ -20,7 +20,7 @@ type DataType struct {
 	StartLocation  Location
 	StartDirection Direction
 	Grid           Set[Location]
-	GridSize       Location
+	GridBBox       BBox
 	Wall           Set[Location]
 	Commands       []Command
 }
@@ -46,23 +46,31 @@ func parseData(data string) DataType {
 	}
 
 	commandLine := dataSplit[len(dataSplit)-1]
-	commandMatches := regexp.MustCompile(`(\d+)([LR])`).FindAllStringSubmatch(commandLine, -1)
-	commands := make([]Command, len(commandMatches)*2+1)
-	for i, match := range commandMatches {
-		commands[i*2] = Command{Move: ParseInt(match[1])}
-		commands[i*2+1] = Command{ChangeDirection: match[2][0]}
+	commandMatches := regexp.MustCompile(`([LR])(\d+)`).FindAllStringSubmatch(commandLine, -1)
+	commands := make([]Command, len(commandMatches)+1)
+	commands[0] = Command{
+		ChangeDirection: 0,
+		Move:            ParseInt(regexp.MustCompile(`^\d+`).FindString(commandLine)),
 	}
-	commands[len(commands)-1] = Command{
-		Move: ParseInt(regexp.MustCompile(`\d+$`).FindString(commandLine)),
+	for i, match := range commandMatches {
+		commands[i+1] = Command{
+			ChangeDirection: match[1][0],
+			Move:            ParseInt(match[2]),
+		}
 	}
 
 	return DataType{
 		StartLocation:  startLocation,
 		StartDirection: directionRight,
 		Grid:           grid,
-		GridSize:       Location{X: len(dataSplit[0]), Y: len(dataSplit) - 2},
-		Wall:           wall,
-		Commands:       commands,
+		GridBBox: BBox{
+			MinX: 0,
+			MaxX: len(dataSplit[0]) - 1,
+			MinY: 0,
+			MaxY: len(dataSplit) - 3,
+		},
+		Wall:     wall,
+		Commands: commands,
 	}
 }
 
@@ -119,7 +127,6 @@ func solvePartX(data DataType, nextStateF func(location Location, direction Dire
 	for _, c := range commands {
 		if c.ChangeDirection == 'L' || c.ChangeDirection == 'R' {
 			myDirection = nextDirectionMap[NextDirectionMapKey{FromDirection: myDirection, Instruction: c.ChangeDirection}]
-			continue
 		}
 
 		for i := 0; i < c.Move; i++ {
@@ -135,7 +142,7 @@ func solvePartX(data DataType, nextStateF func(location Location, direction Dire
 	return calculateScore(myLocation, myDirection)
 }
 
-func nextStatePart1(grid Set[Location], gridSize Location, wall Set[Location], location Location, direction Direction) (Location, Direction) {
+func nextStatePart1(grid Set[Location], gridBBox BBox, wall Set[Location], location Location, direction Direction) (Location, Direction) {
 	result := Location{X: location.X + direction.X, Y: location.Y + direction.Y}
 
 	for !wall.Contains(result) && !grid.Contains(result) {
@@ -143,14 +150,14 @@ func nextStatePart1(grid Set[Location], gridSize Location, wall Set[Location], l
 		result.Y += direction.Y
 
 		switch {
-		case result.X >= gridSize.X:
-			result.X = 0
-		case result.X < 0:
-			result.X = gridSize.X - 1
-		case result.Y >= gridSize.Y:
-			result.Y = 0
-		case result.Y < 0:
-			result.Y = gridSize.Y - 1
+		case result.X > gridBBox.MaxX:
+			result.X = gridBBox.MinX
+		case result.X < gridBBox.MinX:
+			result.X = gridBBox.MaxX
+		case result.Y > gridBBox.MaxY:
+			result.Y = gridBBox.MinY
+		case result.Y < gridBBox.MinY:
+			result.Y = gridBBox.MaxY
 		}
 	}
 
@@ -158,10 +165,10 @@ func nextStatePart1(grid Set[Location], gridSize Location, wall Set[Location], l
 }
 
 func solvePart1(data DataType) (rc int) {
-	grid, gridSize, wall := data.Grid, data.GridSize, data.Wall
+	grid, gridBBox, wall := data.Grid, data.GridBBox, data.Wall
 
 	return solvePartX(data, func(location Location, direction Direction) (Location, Direction) {
-		return nextStatePart1(grid, gridSize, wall, location, direction)
+		return nextStatePart1(grid, gridBBox, wall, location, direction)
 	})
 }
 

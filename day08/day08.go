@@ -75,7 +75,7 @@ func solvePart1(data DataType) (rc int) {
 		}
 	}
 
-	return len(visible)
+	return visible.Len()
 }
 
 func solvePart2(data DataType) (rc int) {

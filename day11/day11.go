@@ -10,6 +10,7 @@ import (
 )
 
 type Monkey struct {
+	InspectedItems  int
 	Items           []int
 	Operation       func(x int) int
 	TestDivisibleBy int
@@ -17,72 +18,73 @@ type Monkey struct {
 	TestFalse       int
 }
 
-func (monkey *Monkey) SetOperation(left string, operator byte, right string) {
-	if right == "old" {
-		monkey.Operation = func(x int) int { return x * x }
-		return
+func NewMonkeyFromDescription(description string) Monkey {
+	getOperationFunction := func(left string, operator byte, right string) func(int) int {
+		if right == "old" {
+			return func(x int) int { return x * x }
+		}
+
+		rightInt := ParseInt(right)
+		switch operator {
+		case '+':
+			return func(x int) int { return x + rightInt }
+		case '*':
+			return func(x int) int { return x * rightInt }
+		}
+
+		return func(x int) int { return x }
 	}
-
-	rightInt := ParseInt(right)
-	switch operator {
-	case '+':
-		monkey.Operation = func(x int) int { return x + rightInt }
-	case '*':
-		monkey.Operation = func(x int) int { return x * rightInt }
-	}
-}
-
-type DataType []*Monkey
-
-func parseData(data string) DataType {
-	dataSplit := strings.Split(data, "\n")
 
 	numbersRegex := regexp.MustCompile(`\d+`)
 	functionRegex := regexp.MustCompile(`(old|\d+) ([*+]) (old|\d+)`)
 
-	result := make([]*Monkey, (len(dataSplit)+1)/7)
-	for i := 0; i < len(dataSplit); i += 7 {
-		startingItems := numbersRegex.FindAllString(dataSplit[i+1], -1)
-		operationParameters := functionRegex.FindStringSubmatch(dataSplit[i+2])
-		test := numbersRegex.FindString(dataSplit[i+3])
-		testTrue := numbersRegex.FindString(dataSplit[i+4])
-		testFalse := numbersRegex.FindString(dataSplit[i+5])
+	descriptionLines := strings.Split(description, "\n")
 
-		monkey := &Monkey{}
-		monkey.Items = StringsToInts(startingItems)
-		monkey.SetOperation(operationParameters[1], operationParameters[2][0], operationParameters[3])
-		monkey.TestDivisibleBy = ParseInt(test)
-		monkey.TestTrue = ParseInt(testTrue)
-		monkey.TestFalse = ParseInt(testFalse)
+	startingItems := numbersRegex.FindAllString(descriptionLines[1], -1)
+	operationParameters := functionRegex.FindStringSubmatch(descriptionLines[2])
+	test := numbersRegex.FindString(descriptionLines[3])
+	testTrue := numbersRegex.FindString(descriptionLines[4])
+	testFalse := numbersRegex.FindString(descriptionLines[5])
 
-		result[i/7] = monkey
+	return Monkey{
+		InspectedItems:  0,
+		Items:           StringsToInts(startingItems),
+		Operation:       getOperationFunction(operationParameters[1], operationParameters[2][0], operationParameters[3]),
+		TestDivisibleBy: ParseInt(test),
+		TestTrue:        ParseInt(testTrue),
+		TestFalse:       ParseInt(testFalse),
 	}
-
-	return result
 }
 
-func copyMonkeys(monkeys []*Monkey) []*Monkey {
-	result := make([]*Monkey, len(monkeys))
-	for i, monkey := range monkeys {
-		newMonkey := *monkey
-		result[i] = &newMonkey
+type DataType []Monkey
+
+func parseData(data string) DataType {
+	dataSplit := strings.Split(data, "\n\n")
+
+	result := make([]Monkey, len(dataSplit))
+	for i, lines := range dataSplit {
+		result[i] = NewMonkeyFromDescription(lines)
 	}
+
 	return result
 }
 
 func solvePartX(data DataType, rounds int, worryLevelDivisor int) int {
-	monkeys := copyMonkeys(data)
+	monkeys := make([]*Monkey, len(data))
+	for i, monkey := range data {
+		newMonkey := monkey
+		monkeys[i] = &newMonkey
+	}
 
 	magicNumber := 1
 	for _, monkey := range monkeys {
 		magicNumber *= monkey.TestDivisibleBy
 	}
 
-	result := make([]int, len(monkeys))
 	for round := 0; round < rounds; round++ {
-		for i, monkey := range monkeys {
+		for _, monkey := range monkeys {
 			for _, item := range monkey.Items {
-				result[i]++
+				monkey.InspectedItems++
 				newItem := (monkey.Operation(item) / worryLevelDivisor) % magicNumber
 				if newItem%monkey.TestDivisibleBy == 0 {
 					monkeys[monkey.TestTrue].Items = append(monkeys[monkey.TestTrue].Items, newItem)
@@ -94,8 +96,8 @@ func solvePartX(data DataType, rounds int, worryLevelDivisor int) int {
 		}
 	}
 
-	sort.Sort(sort.Reverse(sort.IntSlice(result)))
-	return result[0] * result[1]
+	sort.Slice(monkeys, func(i, j int) bool { return monkeys[i].InspectedItems > monkeys[j].InspectedItems })
+	return monkeys[0].InspectedItems * monkeys[1].InspectedItems
 }
 
 func solvePart1(data DataType) (rc int) {

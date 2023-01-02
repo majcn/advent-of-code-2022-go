@@ -7,12 +7,6 @@ import (
 	. "majcn.si/advent-of-code-2022/util"
 )
 
-type Point3 struct {
-	X int
-	Y int
-	Z int
-}
-
 type DataType []Point3
 
 func parseData(data string) DataType {
@@ -44,21 +38,21 @@ func init() {
 	sides = [][4]Point3{side1, side2, side3, side4, side5, side6}
 }
 
+func generateCubeSide(cube Point3, side [4]Point3) [4]Point3 {
+	return [4]Point3{
+		cube.Add(side[0]),
+		cube.Add(side[1]),
+		cube.Add(side[2]),
+		cube.Add(side[3]),
+	}
+}
+
 func solvePart1(data DataType) (rc int) {
 	cubeSides := make(map[[4]Point3]int)
 
 	for _, side := range sides {
 		for _, cube := range data {
-			tmp := [4]Point3{}
-			for i, point := range side {
-				tmp[i] = Point3{
-					X: cube.X + point.X,
-					Y: cube.Y + point.Y,
-					Z: cube.Z + point.Z,
-				}
-			}
-
-			cubeSides[tmp]++
+			cubeSides[generateCubeSide(cube, side)]++
 		}
 	}
 
@@ -77,7 +71,7 @@ func findGroup(loc Point3, getNeighborsF func(loc Point3) Set[Point3]) Set[Point
 
 	queue.Add(loc)
 	visited.Add(loc)
-	for len(queue) > 0 {
+	for queue.Len() > 0 {
 		el := queue.Pop()
 
 		for neighbor := range getNeighborsF(el) {
@@ -116,11 +110,7 @@ func solvePart2(data DataType) (rc int) {
 		result := make(Set[Point3], len(getNeighborsFOffsets))
 
 		for _, offset := range getNeighborsFOffsets {
-			newLoc := Point3{
-				X: loc.X + offset.X,
-				Y: loc.Y + offset.Y,
-				Z: loc.Z + offset.Z,
-			}
+			newLoc := loc.Add(offset)
 
 			if !cubes.Contains(newLoc) &&
 				newLoc.X >= minx && newLoc.X <= maxx &&
@@ -138,31 +128,13 @@ func solvePart2(data DataType) (rc int) {
 	outterGroupCubeSides := make(Set[[4]Point3])
 	for _, side := range sides {
 		for cube := range outterGroup {
-			tmp := [4]Point3{}
-			for i, point := range side {
-				tmp[i] = Point3{
-					X: cube.X + point.X,
-					Y: cube.Y + point.Y,
-					Z: cube.Z + point.Z,
-				}
-			}
-
-			outterGroupCubeSides.Add(tmp)
+			outterGroupCubeSides.Add(generateCubeSide(cube, side))
 		}
 	}
 
 	for _, side := range sides {
 		for _, cube := range data {
-			tmp := [4]Point3{}
-			for i, point := range side {
-				tmp[i] = Point3{
-					X: cube.X + point.X,
-					Y: cube.Y + point.Y,
-					Z: cube.Z + point.Z,
-				}
-			}
-
-			if outterGroupCubeSides.Contains(tmp) {
+			if outterGroupCubeSides.Contains(generateCubeSide(cube, side)) {
 				rc++
 			}
 		}
