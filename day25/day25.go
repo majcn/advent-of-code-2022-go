@@ -55,7 +55,8 @@ func solvePart1(data DataType) (rc string) {
 }
 
 func solvePart2(data DataType) (rc string) {
-	return "Thank you Eric for another wonderful year of AoC!"
+	// "Thank you Eric for another wonderful year of AoC!"
+	return "⭐️⭐️"
 }
 
 func main() {

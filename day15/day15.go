@@ -49,6 +49,10 @@ func solvePartX(data DataType, y int) []Range {
 		}
 	}
 
+	if len(ranges) == 0 {
+		return []Range{}
+	}
+
 	sort.Slice(ranges, func(i, j int) bool { return ranges[i].Min < ranges[j].Min })
 
 	for {
@@ -119,7 +123,7 @@ func solvePart1(data DataType) (rc int) {
 }
 
 func solvePart2(data DataType) (rc int) {
-	const miny, maxy = 0, 4000000
+	const MinXY, MaxXY = 0, 4000000
 
 	lines := make([][2]Point, 0, len(data)*4)
 	for _, sensor := range data {
@@ -140,7 +144,7 @@ func solvePart2(data DataType) (rc int) {
 		for _, line2 := range lines {
 			if line1 != line2 {
 				if point, isValidPoint := LineIntersection(line1, line2); isValidPoint {
-					if point.Y >= miny && point.Y <= maxy {
+					if point.Y >= MinXY && point.Y <= MaxXY {
 						interestingPoints.Add(point.Y)
 					}
 				}
@@ -151,7 +155,9 @@ func solvePart2(data DataType) (rc int) {
 	for y := range interestingPoints {
 		ranges := solvePartX(data, y)
 		if len(ranges) == 2 {
-			return (ranges[0].Max+1)*maxy + y
+			if ranges[1].Min-ranges[0].Max == 2 {
+				return (ranges[0].Max+1)*MaxXY + y
+			}
 		}
 	}
 

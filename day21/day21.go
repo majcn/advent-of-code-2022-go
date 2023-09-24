@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+	"math"
 	"regexp"
 	"strings"
 
@@ -100,19 +101,24 @@ func solvePart2(data DataType) (rc int) {
 	right := rootNode.RightNode().Value()
 
 	a := 0
-	b := MaxInt / 2
+	b := MaxInt
 	for {
 		c := (a + b) / 2
-		data["humn"] = NewValueNode(c)
-		left := rootNode.LeftNode().Value()
 
-		switch {
-		case left > right:
-			a = c
-		case left < right:
-			b = c
-		default:
+		data["humn"] = NewValueNode(c)
+		leftC := rootNode.LeftNode().Value() - right
+
+		if leftC == 0 {
 			return c
+		}
+
+		data["humn"] = NewValueNode(a)
+		leftA := rootNode.LeftNode().Value() - right
+
+		if math.Copysign(1, leftA) == math.Copysign(1, leftC) {
+			a = c
+		} else {
+			b = c
 		}
 	}
 }
